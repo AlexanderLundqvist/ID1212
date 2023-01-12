@@ -1,0 +1,12 @@
+# NetBeans related files (https://github.com/github/gitignore/blob/main/Global/NetBeans.gitignore)
+**/nbproject/private/
+**/nbproject/Makefile-*.mk
+**/nbproject/Package-*.bash
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+Lab_5/KTHJavaMail/src/resources/Credentials.txt
+Lab_3/KTHMailClient/src/resources/Credentials.txt
