@@ -2,6 +2,7 @@ package integration;
 
 import java.sql.*;
 import java.util.*;
+import model.QuizBean;
 import model.UserBean;
 
 /**
@@ -140,23 +141,10 @@ public class DBhandler {
     }
     
     
-    public QuizBean getQuiz() {
-        UserBean user = null;
-        try {
-            getUser.setString(1, username);
-            getUser.setString(2, password);
-            ResultSet result = getUser.executeQuery();
-            if (result.next()) {
-                Integer id = result.getInt("id");
-                String usernameDB = result.getString("username");
-                user.setId(id);
-                user.setUsername(usernameDB);
-                user.setPassword(password);
-            }
-        } catch (SQLException exception) {
-            System.err.println("Could not fetch user: " + exception.getMessage());
-        }
-        return user;
+    public QuizBean getQuiz(String subject) {
+        QuizBean quiz = null;
+        
+        return quiz;
     }
     
     public ArrayList<String[]> getQuestions(String subject) {
