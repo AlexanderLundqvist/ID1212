@@ -28,7 +28,7 @@ public class DBhandler {
     private final String dbPassword = "nbuser";
     private Connection connection;
     private PreparedStatement getUser;
-    private PreparedStatement getQuizzes;
+    private PreparedStatement getQuizzes;   
     private PreparedStatement getQuestions;
     private PreparedStatement updateResult;
     private PreparedStatement getResults;
@@ -138,14 +138,7 @@ public class DBhandler {
             System.err.println("Could not fetch user: " + exception.getMessage());
         }
         return user;
-    }
-    
-    
-    public QuizBean getQuiz(String subject) {
-        QuizBean quiz = null;
-        
-        return quiz;
-    }
+    } 
     
     public ArrayList<String[]> getQuestions(String subject) {
         ArrayList<String[]> requestedQuestions = new ArrayList<>();

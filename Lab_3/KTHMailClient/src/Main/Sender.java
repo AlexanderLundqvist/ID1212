@@ -1,8 +1,10 @@
 package Main;
 
 import java.io.*;
+import java.io.File;
 import java.net.Socket;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Scanner;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -24,145 +26,142 @@ import javax.net.ssl.SSLSocketFactory;
  * @author Alexander Lundqvist & Ramin Shojaei
  */
 public class Sender {
-
+    private static final Map<Integer, String> SMTPresponses = Map.of(
+            200, "200 OK",
+            400, "400 Bad Request",
+            404, "404 Not Found",
+            405, "405 Method Not Allowed",
+            500, "500 Internal Server Error",
+            505, "505 HTTP Version Not Supported");
+    
+    private static final String SERVER = "smtp.kth.se";
+    private static final int PORT = 587;
+    private static String username;
+    private static String password;
+    private static String recipient;
+    private static String message;
+    private static Socket socket;
+    private static BufferedReader incoming;
+    private static PrintWriter outgoing;
+            
     /**
      * Main method.
      * @param args takes no incoming arguments
      */ 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        final String SERVER = "smtp.kth.se";
-        final int PORT = 587;
-        String username;
-        String password;
-        String recipient;
-        String subject;
-        String message;
-       
-        /* 
-        We get the login credentials by reading it from a secret file.
-        */
-        Scanner file = new Scanner(new File("src/resources/Credentials.txt"));
-        username = file.nextLine().trim();
-        password = file.nextLine().trim();
-        file.close();
-        System.out.println("Login credentials has been processed.");
-                
-        Scanner in = new Scanner(System.in);
-        System.out.println("Recipient: ");
-        recipient = in.nextLine();
-        System.out.println("Message subject: ");
-        subject = in.nextLine();
-        System.out.println("Type your message: ");
-        message = in.nextLine(); // Should be something else since we only read one line now.
-        in.close();
+    public static void main(String[] args) {
+        try {
+            /* 
+            We get the login credentials by reading it from a secret file. Then
+            the user can specify the recipient and the message.
+            */
+            Scanner file = new Scanner(new File("src/resources/Credentials.txt"));
+            username = file.nextLine().trim();
+            password = file.nextLine().trim();
+            file.close();
+            System.out.println("Login credentials has been processed.");
 
-        // Skapa en ett objekt i form av en okrypterad socket
-        // Sätter upp Socketens incoming- och outputstream
-        Socket socket = new Socket(SERVER, PORT);
-        BufferedReader incoming = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        PrintWriter outgoing = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+            Scanner in = new Scanner(System.in);
+            System.out.println("Recipient: ");
+            recipient = in.nextLine().trim();
+            System.out.println("Message: ");
+            message = in.nextLine() + "\r\n.\r\n"; // <CRLF>.<CRLF> to end message 
+            in.close();
+            System.out.println();
+            
+            /*
+            Setting up the I/O for the initial non-ecrypted socket.
+            */
+            socket = new Socket(SERVER, PORT);
+            incoming = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            outgoing = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+            System.out.println(incoming.readLine()); // Initialize the connection by reading the first line
+            
+            /*
+            Greet the server through the connection, specifying that
+            we want to upgrade to a secure connection.
+            */
+            sendMessage("EHLO " + SERVER, true);
+            sendMessage("STARTTLS", true);
 
-        //Läser in första meddelandet från Servern
-        String response = incoming.readLine();  //Läser in ett medelande och sen skriver ut (outgoing) det.
-        System.out.println("Server response: " + response);
+            /*
+            Create a new SSL socket and recreate the I/O streams with it.
+            */
+            SSLSocketFactory socketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+            SSLSocket sslSocket = (SSLSocket) socketFactory.createSocket(socket, SERVER, PORT, true); 
+            incoming = new BufferedReader(new InputStreamReader(sslSocket.getInputStream()));
+            outgoing = new PrintWriter(sslSocket.getOutputStream(), true);
 
-        // Initierar SMTP konversation med servern. EHLO stödjer ESMTP.
-        outgoing.println("EHLO " + SERVER);
-        outgoing.flush();
-        messageReader(incoming);
+            /*
+            Greet the server again after upgrading to SSL/TLS.
+            */
+            sendMessage("EHLO " + SERVER, true);
+            sendMessage("AUTH LOGIN", true);
+            
+            /*
+            Encoding the username and password to base 64 encoding so that it
+            works over the SSL socket. Then we send it to the server for authentication.
+            */
+            Base64.Encoder encoder = Base64.getEncoder();
+            String usernameEncode = encoder.encodeToString(username.getBytes());
+            String passwordEncode = encoder.encodeToString(password.getBytes());
+            sendMessage(usernameEncode, false);
+            sendMessage(passwordEncode, false);
 
-        // StartTLS är ett protokollkommando
-        // Används för att informera servern om att klienten vill uppgradera från osäker till säker anslutning med TLS eller SSL.
-        outgoing.println("STARTTLS");
-        outgoing.flush();
-        message = incoming.readLine();
+            /*
+            After successful authentication we can start to send the actual message.
+            */
+            sendMessage("MAIL FROM:<" + username + "@kth.se>", true);
+            sendMessage("RCPT TO:<" + recipient + "@kth.se>", true);
+            sendMessage("DATA", true);
+            sendMessage(message, true);
+            sendMessage("QUIT", true);
 
-        // Skickar bara lösenordet utifall att det är en säker anslutning
-        if (message.contains("220")) {
-            System.out.println(message);
+            sslSocket.close();
+            socket.close();
+        } catch (Exception exception) {
+            System.err.println("Error: " + exception.getMessage());
         }
-        else {
-            System.out.println(message);
-            System.out.println("Connection failed");
-            System.exit(1);
-        }
-
-
-        // Skapar ett Socket factory för SSL Sockets.
-        SSLSocketFactory socketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-        // Vi skapade först en standard socket och slår nu in den i en SSLSocket.
-        SSLSocket sslSocket = (SSLSocket) socketFactory.createSocket(socket, SERVER, PORT, true); 
-        
-        incoming = new BufferedReader(new InputStreamReader(sslSocket.getInputStream()));
-        outgoing = new PrintWriter(sslSocket.getOutputStream(), true);
-
-        // EHLO commanded skrivs in nu igen efter den säkra anslutningen har skett
-        outgoing.println("EHLO " + SERVER);
-        System.out.println(incoming.readLine());
-        //messageReader(incoming);
-
-        // Försöker logga in (Authentication Login)
-        outgoing.println("AUTH LOGIN");
-        System.out.println(incoming.readLine());
-        //messageReader(incoming);
-
-        //Encodear till Base 64 format, det är en metod för att binärt data ska kunna kodas med 7 bitars ASCII-tecken
-        Base64.Encoder encoder = Base64.getEncoder();
-        String usernameEncode = encoder.encodeToString(username.getBytes());
-        String passwordEncode = encoder.encodeToString(password.getBytes());
-        
-        // Skickar iväg det encodeade användarnamnet och lösenordet
-        messageWriter(outgoing, usernameEncode);
-        System.out.println(incoming.readLine());
-        //messageReader(incoming);
-        
-        messageWriter(outgoing, passwordEncode);
-        System.out.println(incoming.readLine());
-        //messageReader(incoming);
-
-        // Kommandot MAIL FROM initierar en överföring av e-post.
-        messageWriter(outgoing, "MAIL FROM:<" + username + "@kth.se>");
-        System.out.println(incoming.readLine());
-        //messageReader(incoming);
-        
-        // RCPT TO specificerar E-mail addressen av mottagaren
-        // Vill man skicka det till flera kan man skapa flera RCPT TO under, det går bra
-        //Man borde få ut 250 OK
-        messageWriter(outgoing, "RCPT TO:<" + recipient + "@kth.se>");
-        System.out.println(incoming.readLine());
-        //messageReader(incoming);
-        
-        // Kommandot Data definierar informationen som datatexten har i meddelandet.
-        messageWriter(outgoing, "DATA");
-        System.out.println(incoming.readLine());
-        //messageReader(incoming);
-        
-        messageWriter(outgoing, message);
-        System.out.println(incoming.readLine());
-        //messageReader(incoming);
-        
-        //Borde inte komma fler meddelanden efter vi nått 221.
-        outgoing.println("QUIT");
-        System.out.println(incoming.readLine());
-        //messageReader(incoming);
-        
-        sslSocket.close();
-        socket.close();
     }
     
-    public static void messageWriter(PrintWriter outgoing, String message) {
-        outgoing.println(message);
-        //outgoing.flush();
-        System.out.println(message);
-    }
     
-    //Skriver ut det resulterande svaret från servern
-    public static void messageReader(BufferedReader input) throws IOException {
-        String message;
-        while ((message = input.readLine()) != null) {
-            System.out.println("Server response: " + message);
-            if ( message.contains("220 ") || message.contains("250 ") || message.contains("334 "))
-                break;
+    /**
+     * Sends a message to the mail server. 
+     * @param message the message to be sent
+     * @param read specifies if we want to read the response
+     */
+    private static void sendMessage(String message, boolean read) {
+        try {
+            outgoing.println(message);
+            outgoing.flush();
+            if (read == true) {
+                readResponse(message);
+            }
+            else {
+                System.out.println(incoming.readLine());
+            }
+        } catch (Exception exception) {
+            System.err.println("Error sending message: " + exception.getMessage());
         }
     }
+    
+    /**
+     * Reads the response from the server.
+     */
+    private static void readResponse(String message) {
+        try {
+            String line;
+            System.out.println();
+            System.out.println(message);
+            while ((line = incoming.readLine()) != null) { 
+                //System.out.println(line); 
+                if (line.startsWith("220 ") || line.startsWith("235 ") || line.startsWith("250 ") || line.startsWith("334 ") || line.startsWith("354 ")) {
+                    System.out.println(line);
+                    break;
+                }
+            }
+        } catch (IOException exception) {
+            System.err.println("Error reading server response: " + exception.getMessage());
+        }
+    }
+    
 }
