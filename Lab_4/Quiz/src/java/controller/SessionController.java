@@ -43,28 +43,37 @@ public class SessionController extends HttpServlet {
         String password = request.getParameter("password");
         String logout = request.getParameter("logout");
         
-        // Logout
-        if (user != null && logout != null) {
-            session.setAttribute("SessionStatus", "LoggedOut");
+        if (logout != null) {
+            session.setAttribute("SessionStatus", "Logout");
             response.sendRedirect("index.jsp");
-            return;
-        }
-        // Login
-        if (username != null && password != null && validateUser(username, password)) {
-            user = database.getUser(username, password);
-            
-            session.setAttribute("UserBean", user);                
-            session.setAttribute("SessionStatus", "LoggedIn");
-            response.sendRedirect("home.jsp");
-            return;
         }
         else {
-
-            user = new UserBean();
-            session.setAttribute("SessionStatus", "Error");
-            response.sendRedirect("index.jsp");
-            return;
+            
         }
+        
+        
+//        // Logout
+//        if (user != null && logout != null) {
+//            session.setAttribute("SessionStatus", "Logout");
+//            response.sendRedirect("index.jsp");
+//            return;
+//        }
+//        // Login
+//        if (username != null && password != null && validateUser(username, password)) {
+//            user = database.getUser(username, password);
+//            
+//            session.setAttribute("UserBean", user);                
+//            session.setAttribute("SessionStatus", "Login");
+//            response.sendRedirect("home.jsp");
+//            return;
+//        }
+//        else {
+//
+//            user = new UserBean();
+//            session.setAttribute("SessionStatus", "Error");
+//            response.sendRedirect("index.jsp");
+//            return;
+//        }
     }
     
     /**
