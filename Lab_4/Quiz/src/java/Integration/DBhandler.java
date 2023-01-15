@@ -109,19 +109,14 @@ public class DBhandler {
         }
     }
     
+    /**
+     * This method uses several SQL statements to create a UserBean object from
+     * the data present in the database.
+     * @param username the username
+     * @param password the password
+     * @return a UserBean
+     */
     public UserBean getUser(String username, String password) {
-//        UserBean user = new UserBean();
-//        if (username != null && this.users.containsKey(username)) {
-//            String password = this.users.get(username);
-//            if (username.equals("Alexlu@kth.se")) {
-//                user.setId(1);
-//            }
-//            else if (username.equals("Rshojaei@kth.se")) {
-//                user.setId(2);
-//            }
-//            user.setUsername(username);
-//            user.setPassword(password);
-//        }
         UserBean user = null;
         try {
             getUser.setString(1, username);
@@ -140,8 +135,13 @@ public class DBhandler {
         return user;
     } 
     
-    public ArrayList<String[]> getQuestions(String subject) {
-        ArrayList<String[]> requestedQuestions = new ArrayList<>();
+    /**
+     * 
+     * @param subject
+     * @return 
+     */
+    public ArrayList<String> getQuestions(String subject) {
+        ArrayList<String> requestedQuestions = new ArrayList<>();
         
         /*-------- Replace with SQL -------------*/
         
@@ -162,16 +162,27 @@ public class DBhandler {
         }
         
         /*---------- Replace with SQL -----------*/
+        
+        
         return requestedQuestions;
     }
     
-    
+    /**
+     * 
+     * @return 
+     */
     public String[] getSubjects() {
         String[] requestedSubjects = {"Astronomy", "Nature", "History"};
         // Select all subjects from quizzes table
         return requestedSubjects;
     }
     
+    /**
+     * 
+     * @param user
+     * @param subject
+     * @return 
+     */
     public Integer[] getResults(UserBean user, String subject) {
         Integer[] requestedResults = null;
         // get id from users table, then id from quizzes
@@ -203,17 +214,13 @@ public class DBhandler {
     }
     
     /**
-     * 
+     * This method prepares the SQL statements that are used by the other methods.
      * @throws SQLException 
      */
     private void prepareStatements() throws SQLException {
         getUser = connection.prepareStatement(
                 "SELECT id, username, password from users WHERE username=? AND password=?"
-        );
-        
-        getQuizzes = connection.prepareStatement(
-                "SELECT id FROM quizzes WHERE subject=?"
-        );
+        );    
         
         getQuizzes = connection.prepareStatement(
                 "SELECT id, subject FROM quizzes"
@@ -222,7 +229,6 @@ public class DBhandler {
         getQuestions = connection.prepareStatement(
                 "SELECT text, options, answer FROM selector INNER JOIN questions ON id=question_id " + 
                 "WHERE quiz_id=(SELECT id FROM quizzes WHERE subject=?)"
-                
         );
 
         updateResult = connection.prepareStatement(

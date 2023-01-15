@@ -1,7 +1,7 @@
 package model;
 
 import java.io.Serializable;
-import java.util.HashMap;
+import java.util.ArrayList;
 
 /**
  * This JavaBean represents a user.
@@ -12,7 +12,7 @@ public class UserBean implements Serializable {
     private Integer id;
     private String username;
     private String password;
-    private HashMap<String, Integer> statistics;
+    private ArrayList<String> statistics;
     
     /**
      * No-argument constructor for the Bean.
@@ -72,7 +72,7 @@ public class UserBean implements Serializable {
      * Getter for the statistics field.
      * @return the statistics
      */
-    public HashMap<String, Integer> getStatistics(){
+    public ArrayList<String> getStatistics(){
         return this.statistics;
     }
     
@@ -80,7 +80,7 @@ public class UserBean implements Serializable {
      * Setter for the statistics field.
      * @param results the statistics to set
      */
-    public void setStatistics(HashMap<String, Integer> statistics){
+    public void setStatistics(ArrayList<String> statistics){
         this.statistics = statistics;
     }
     

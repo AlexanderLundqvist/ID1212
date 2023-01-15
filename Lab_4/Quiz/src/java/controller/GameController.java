@@ -74,11 +74,12 @@ public class GameController extends HttpServlet {
      * @param requestedQuestion the array
      * @return the question
      */
-    private QuestionBean generateQuestion(String[] requestedQuestion) {
+    private QuestionBean generateQuestion(ArrayList<String> requestedQuestion) {
         QuestionBean question = new QuestionBean();
         String text = requestedQuestion[0];
         String[] options = requestedQuestion[1].split("/");
         String[] solution = requestedQuestion[2].split("/");
+        question.setId(1);
         question.setQuestion(text);
         question.setOptions(options);
         question.setSolution(solution);
