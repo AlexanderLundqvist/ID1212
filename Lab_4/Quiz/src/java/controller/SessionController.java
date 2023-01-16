@@ -1,6 +1,5 @@
 package controller;
 
-import integration.DBhandler;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -9,6 +8,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import model.UserBean;
+import integration.*;
+import static utilities.Debug.printSessionAttributes;
 
 /**
  * Controller servlet that handles login and logout requests.
@@ -37,66 +38,42 @@ public class SessionController extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         HttpSession session = request.getSession(true);
+        session.setAttribute("SessionStatus", null);
+        String username = request.getParameter("Username");
+        String password = request.getParameter("Password");
+        String logout = request.getParameter("Logout");  
         
-        UserBean user = (UserBean) session.getAttribute("UserBean");
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
-        String logout = request.getParameter("logout");
-        
+        // Logout
         if (logout != null) {
+            session.setAttribute("UserBean", null);
             session.setAttribute("SessionStatus", "Logout");
             response.sendRedirect("index.jsp");
-        }
-        else {
-            
+            return;
         }
         
-        
-//        // Logout
-//        if (user != null && logout != null) {
-//            session.setAttribute("SessionStatus", "Logout");
-//            response.sendRedirect("index.jsp");
-//            return;
-//        }
-//        // Login
-//        if (username != null && password != null && validateUser(username, password)) {
-//            user = database.getUser(username, password);
-//            
-//            session.setAttribute("UserBean", user);                
-//            session.setAttribute("SessionStatus", "Login");
-//            response.sendRedirect("home.jsp");
-//            return;
-//        }
-//        else {
-//
-//            user = new UserBean();
-//            session.setAttribute("SessionStatus", "Error");
-//            response.sendRedirect("index.jsp");
-//            return;
-//        }
-    }
-    
-    /**
-     * Simple user credentials validation against the database.
-     * @param username the provided username
-     * @param password the provided password
-     * @return boolean
-     */
-    private boolean validateUser(String username, String password) {
-        try {
+        // Login
+        if (username != null && password != null) {
             UserBean user = database.getUser(username, password);
-            if (user != null) {
-                return true;
+            if (user == null) {
+                session.setAttribute("SessionStatus", "Wrong");
+                response.sendRedirect("index.jsp");
+                return;
             }
             else {
-                return false;
+                session.setAttribute("UserBean", user);                
+                session.setAttribute("SessionStatus", "Login");
+                response.sendRedirect("home.jsp");
+                return;
             }
-        } catch (Exception exception) {
-            System.err.println("Debug: " + exception.getMessage());
-            exception.printStackTrace();
-            return false;
         }
+        else {
+            session.setAttribute("SessionStatus", "Error");
+            response.sendRedirect("index.jsp");
+            return;
+        }
+
     }
+    
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**

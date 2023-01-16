@@ -12,7 +12,7 @@ public class QuestionBean implements Serializable {
     private Integer id;
     private String question;
     private ArrayList<String> options;
-    private ArrayList<String> solution;
+    private ArrayList<String> answer;
     
     /**
      * No-argument constructor for the Bean.
@@ -69,19 +69,19 @@ public class QuestionBean implements Serializable {
     }
 
     /**
-     * Getter for the solution field.
-     * @return the solution
+     * Getter for the answer field.
+     * @return the answer
      */
-    public ArrayList<String> getSolution() {
-        return this.solution;
+    public ArrayList<String> getAnswer() {
+        return this.answer;
     }
 
     /**
-     * Setter for the solution field.
-     * @param solution the solution to set
+     * Setter for the answer field.
+     * @param answer the answer to set
      */
-    public void setSolution(ArrayList<String> solution) {
-        this.solution = solution;
+    public void setAnswer(ArrayList<String> answer) {
+        this.answer = answer;
     }
     
     

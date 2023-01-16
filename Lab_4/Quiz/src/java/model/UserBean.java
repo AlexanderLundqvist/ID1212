@@ -12,7 +12,7 @@ public class UserBean implements Serializable {
     private Integer id;
     private String username;
     private String password;
-    private ArrayList<String> statistics;
+    private ArrayList<Integer> results;
     
     /**
      * No-argument constructor for the Bean.
@@ -69,19 +69,19 @@ public class UserBean implements Serializable {
     }
     
     /**
-     * Getter for the statistics field.
-     * @return the statistics
+     * Getter for the results field.
+     * @return the results
      */
-    public ArrayList<String> getStatistics(){
-        return this.statistics;
+    public ArrayList<Integer> getResults(){
+        return this.results;
     }
     
     /**
-     * Setter for the statistics field.
-     * @param results the statistics to set
+     * Setter for the results field.
+     * @param results the results to set
      */
-    public void setStatistics(ArrayList<String> statistics){
-        this.statistics = statistics;
+    public void setResults(ArrayList<Integer> results){
+        this.results = results;
     }
     
 }
