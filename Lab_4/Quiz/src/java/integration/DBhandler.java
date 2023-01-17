@@ -6,7 +6,6 @@ import model.QuestionBean;
 import model.QuizBean;
 import model.UserBean;
 
-// 'jdbc:derby:C:\Users\Alexander\Software\DerbyDB\quizDB;'
 
 /**
  * This class handles transactions aimed at an Apache Derby database that 
@@ -25,7 +24,6 @@ import model.UserBean;
  */
 public class DBhandler {
     private final String dbURL = "jdbc:derby:C:\\Users\\Alexander\\Software\\DerbyDB\\quizDB";
-    private final String dbURLWeb = "jdbc:derby://localhost:1527/quizDB";
     private final String dbDriver = "org.apache.derby.jdbc.EmbeddedDriver";
     private final String dbUser = "nbuser";
     private final String dbPassword = "nbuser";
@@ -40,17 +38,11 @@ public class DBhandler {
      * Constructor for the handler.
      */
     public DBhandler() {          
-        try{
-            Class.forName(this.dbDriver);
-            Properties properties = new Properties();
-            properties.setProperty("user", this.dbUser);
-            properties.setProperty("password",this.dbPassword);
-            this.connection = DriverManager.getConnection(this.dbURL, properties);
-            this.connection.setAutoCommit(false);
+        try {
+            connection = createConnection();
             prepareStatements();
-        }
-        catch(Exception exception){
-            System.err.println("Could not connect to database: " + exception.getMessage());
+        } catch (Exception exception){
+            System.err.println("Could not create database handler: " + exception.getMessage());
             exception.printStackTrace();
         }
     }
@@ -65,9 +57,9 @@ public class DBhandler {
     public UserBean getUser(String username, String password) {
         UserBean user = null;
         try {
-            getUser.setString(1, username);
-            getUser.setString(2, password);
-            ResultSet result = getUser.executeQuery();
+            this.getUser.setString(1, username);
+            this.getUser.setString(2, password);
+            ResultSet result = this.getUser.executeQuery();
             if (result.next()) {
                 user = new UserBean();
                 Integer id = result.getInt("id");
@@ -92,7 +84,7 @@ public class DBhandler {
     public ArrayList<QuizBean> getQuizzes() {
         ArrayList<QuizBean> quizzes = new ArrayList<>();
         try {
-            ResultSet result = getQuizzes.executeQuery();
+            ResultSet result = this.getQuizzes.executeQuery();
             while (result.next()) {
                 // Get the row cells
                 Integer id = result.getInt("id");
@@ -121,7 +113,8 @@ public class DBhandler {
     public ArrayList<QuestionBean> getQuestions(Integer quizId) {
         ArrayList<QuestionBean> requestedQuestions = new ArrayList<>();
         try {
-            ResultSet result = getQuestions.executeQuery();
+            this.getQuestions.setInt(1, quizId);
+            ResultSet result = this.getQuestions.executeQuery();
             while (result.next()) {
                 // Get the row cells
                 Integer id = result.getInt("id");
@@ -132,16 +125,12 @@ public class DBhandler {
                 // Parse the questions
                 ArrayList<String> optionsList = new ArrayList<>();
                 String[] optionsParsed = options.split("/");
-                for (int i = 0; i < optionsParsed.length; i++) {
-                    optionsList.add(optionsParsed[i]);
-                }
+                optionsList.addAll(Arrays.asList(optionsParsed));
                 
                 // Parse the answer
                 ArrayList<String> answerList = new ArrayList<>();
                 String[] answerParsed = answer.split("/");
-                for (int j = 0; j < answerParsed.length; j++) {
-                    answerList.add(answerParsed[j]);
-                }
+                answerList.addAll(Arrays.asList(answerParsed));
                 
                 // Create the question
                 QuestionBean question = new QuestionBean();
@@ -159,8 +148,6 @@ public class DBhandler {
         return requestedQuestions;
     }
     
-    
-    
     /**
      * Retrieves the stored quiz results from the database for a specific user.
      * @param id the user ID
@@ -169,8 +156,8 @@ public class DBhandler {
     public ArrayList<Integer> getResults(Integer id) {
         ArrayList<Integer> requestedResults = new ArrayList<>();
         try {
-            getResults.setInt(1, id);
-            ResultSet result = getResults.executeQuery();
+            this.getResults.setInt(1, id);
+            ResultSet result = this.getResults.executeQuery();
             while (result.next()) {
                 // Get the row cells
                 Integer score = result.getInt("score");
@@ -192,10 +179,10 @@ public class DBhandler {
      */
     public void updateResult(Integer userId, Integer quizId, Integer score) {
         try {
-            updateResult.setInt(1, userId);
-            updateResult.setInt(2, quizId);
-            updateResult.setInt(3, score);
-            updateResult.executeQuery();
+            this.updateResult.setInt(1, userId);
+            this.updateResult.setInt(2, quizId);
+            this.updateResult.setInt(3, score);
+            this.updateResult.executeQuery();
         } catch (SQLException exception) {
             System.err.println("Could not update results: " + exception.getMessage());
             exception.printStackTrace();
@@ -203,29 +190,52 @@ public class DBhandler {
     }
     
     /**
+     * Creates the database connection.
+     * @return the connection
+     */
+    private Connection createConnection() {
+        Connection dbConnection = null;
+        try {
+            Class.forName(this.dbDriver);
+            Properties properties = new Properties();
+            properties.setProperty("user", this.dbUser);
+            properties.setProperty("password",this.dbPassword);
+            dbConnection = DriverManager.getConnection(this.dbURL, properties);
+            dbConnection.setAutoCommit(false);
+            System.out.println("Successful connection to database!");
+        } catch (ClassNotFoundException exception){
+            System.err.println("Failed to load database drivers: " + exception.getMessage());
+            exception.printStackTrace();
+        } catch (SQLException exception){
+            System.err.println("Could not connect to database: " + exception.getMessage());
+            exception.printStackTrace();
+        }
+        return dbConnection;
+    }
+    
+    
+    /**
      * This method prepares the SQL statements that are used by the other methods.
-     * @throws SQLException 
      */
     private void prepareStatements() throws SQLException {
-        getUser = this.connection.prepareStatement(
-                "SELECT id, username, password FROM users WHERE username=? AND password=?"
+        this.getUser = this.connection.prepareStatement(
+            "SELECT id, username, password FROM users WHERE username=? AND password=?"
         );    
-        
-        getQuizzes = this.connection.prepareStatement(
+
+        this.getQuizzes = this.connection.prepareStatement(
                 "SELECT id, subject FROM quizzes"
         );
 
-        getQuestions = this.connection.prepareStatement(
-                "SELECT id, text, options, answer FROM questions WHERE id=(" + 
-                        "SELECT question_id FROM selector WHERE quiz_id=?)"
+        this.getQuestions = this.connection.prepareStatement(
+                "SELECT id, text, options, answer FROM selector INNER JOIN questions ON id=question_id WHERE quiz_id=?"
         );
 
-        getResults = this.connection.prepareStatement(
-              "SELECT user_id, quiz_id, score FROM results WHERE user_id=?"
+        this.getResults = this.connection.prepareStatement(
+              "SELECT quiz_id, score FROM results WHERE user_id=?"
         );
 
-        updateResult = this.connection.prepareStatement(
-                "INSERT INTO results (user_id, quiz_id, score) VALUES (?, ?, ?);"
+        this.updateResult = this.connection.prepareStatement(
+                "INSERT INTO results (user_id, quiz_id, score) VALUES (?, ?, ?)"
         );
     }
 }

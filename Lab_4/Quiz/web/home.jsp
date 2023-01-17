@@ -34,9 +34,7 @@
         <p>Here you can choose a quiz to do or log out if you are done.</p>
         <% 
             ArrayList<QuizBean> quizzes = (ArrayList<QuizBean>) request.getSession().getAttribute("Quizzes");
-            if (quizzes == null || quizzes.isEmpty()) {
-                out.print("<div class=\"error\"><p>Something went wrong!</p></div>");
-            }
+            if (quizzes == null || quizzes.isEmpty()) {out.print("<div class=\"error\"><p>Something went wrong!</p></div>");}
             else {
                 out.print("<form id=\"quizMenuForm\" action=\"GameController\" method=\"GET\">");
                 for (QuizBean quiz : quizzes) {
@@ -54,7 +52,7 @@
             }
         %>
         <br>
-        <form id="LogoutForm" action="SessionController" method="GET">
+        <form id="LogoutForm" action="GameController" method="GET">
             <input name="Logout" type="submit"  value="Logout"/>
         </form>
     </body>

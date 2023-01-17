@@ -39,7 +39,41 @@ public class GameController extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         HttpSession session = request.getSession(true);
-        ArrayList<QuizBean> quizzes = (ArrayList<QuizBean>) session.getAttribute("Quizzes");
+        ArrayList<QuizBean> quizzes = database.getQuizzes();
+        
+        // Logout
+        String logout = request.getParameter("Logout"); 
+        if (logout != null) {
+            session.setAttribute("UserBean", null);
+            session.setAttribute("SessionStatus", "Logout");
+            response.sendRedirect("index.jsp");
+            return;
+        }
+        
+        // Login
+        String username = request.getParameter("Username");
+        String password = request.getParameter("Password");
+        if (username != null && password != null) {
+            UserBean user = database.getUser(username, password);
+            if (user == null) {
+                session.setAttribute("SessionStatus", "Wrong");
+                response.sendRedirect("index.jsp");
+                return;
+            }
+            else {
+                quizzes = database.getQuizzes();
+                session.setAttribute("Quizzes", quizzes); 
+                session.setAttribute("UserBean", user);                
+                session.setAttribute("SessionStatus", "Login");
+                response.sendRedirect("home.jsp");
+                return;
+            }
+        }
+        else if (username == null || password == null) {
+            session.setAttribute("SessionStatus", "Error");
+            response.sendRedirect("index.jsp");
+            return;
+        }
         
         // Navigate to home from quiz
         String path = request.getParameter("Nav");
@@ -89,7 +123,6 @@ public class GameController extends HttpServlet {
         }
         
     } 
-
     
     /**
      * Extracts the clients quiz answers from the request.
@@ -106,7 +139,6 @@ public class GameController extends HttpServlet {
         }
         return answers;
     } 
-    
     
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**

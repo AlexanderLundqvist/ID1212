@@ -27,7 +27,7 @@
         <h2>ID1212: Lab 4 Quiz</h2>
         <h4>Welcome! Login to start a quiz.</h4>
         <%-- submit calls the SessionController to handle the login attempt --%>
-        <form id="LoginForm" action="SessionController" method="GET">
+        <form id="LoginForm" action="GameController" method="GET">
             <input name="Username" type="text" placeholder="email" required/>
             <input name="Password" type="password" placeholder="password" required/>
             <input name="Login" type="submit" value="Login"/>
