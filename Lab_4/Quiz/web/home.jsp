@@ -6,21 +6,9 @@
     or logout.  
 --%>
 
-
-<%@page import="java.util.HashMap"%>
-<%@page import="java.util.ArrayList"%>
 <%@page import="model.UserBean"%>
-<%@page import="model.QuestionBean"%>
+<%@page import="java.util.ArrayList"%>
 <%@page import="model.QuizBean"%>
-<%@page import="integration.DBhandler"%>
-<%  
-    DBhandler database = new DBhandler();
-    String[] subjects = database.getSubjects();
-    UserBean user = (UserBean) request.getSession().getAttribute("UserBean");
-    QuizBean quiz = (QuizBean) request.getSession().getAttribute("Quiz");
-    HashMap<String, Integer> statistics = user.getStatistics();
-    
-%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
@@ -36,30 +24,36 @@
         <!-- Project styling -->
         <style>
         body {padding: 10px;}
-        .score {color: red;}
         .subject {margin-bottom: 5px;}
+        .score {color: red;}
+        .error {color: red;}
         </style>
     </head>
     <body>
         <h2>Home</h2>
         <p>Here you can choose a quiz to do or log out if you are done.</p>
-        <form id="quizMenuForm" action="GameController" method="GET">
-            <%
-                for (int i = 0; i < subjects.length; i++) {
-                    out.print("<input name=\"subject\" class=\"subject\" type=\"submit\" value=" + subjects[i] +"><br>");
+        <% 
+            ArrayList<QuizBean> quizzes = (ArrayList<QuizBean>) request.getSession().getAttribute("Quizzes");
+            if (quizzes == null || quizzes.isEmpty()) {out.print("<div class=\"error\"><p>Something went wrong!</p></div>");}
+            else {
+                out.print("<form id=\"quizMenuForm\" action=\"GameController\" method=\"GET\">");
+                for (QuizBean quiz : quizzes) {
+                    String subject = quiz.getSubject();
+                    out.print("<input name=\"Subject\" class=\"subject\" type=\"submit\" value=" + subject +"><br>");
                 }
-            %>
-        </form>
-        <br>
-        <%  
-            out.print("<h4>Current statistics</h4>");
-            for (int i = 0; i < subjects.length; i++) {
-                out.print("<p>" + subjects[i] + ": " + 0 + "/" + 3 + "</p>");
+                out.print("</form><br>");
+                
+                UserBean user = (UserBean) request.getSession().getAttribute("UserBean");
+                ArrayList<Integer> results = user.getResults();
+                out.print("<h4>Current statistics</h4>");
+                for (int i = 0; i < results.size(); i++) {
+                    out.print("<p>" + quizzes.get(i).getSubject() + ": " + 0 + "/" + quizzes.get(i).getQuestions().size() + "</p>");
+                }
             }
         %>
         <br>
-        <form id="logoutForm" action="SessionController" method="GET">
-            <input name="logout" type="submit"  value="Logout"/>
+        <form id="LogoutForm" action="GameController" method="GET">
+            <input name="Logout" type="submit"  value="Logout"/>
         </form>
     </body>
 </html>

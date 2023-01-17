@@ -5,8 +5,6 @@
     This is the login page for the game.   
 --%>
 
-<% String status = (String) request.getSession().getAttribute("SessionStatus"); %>
-
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
@@ -29,15 +27,19 @@
         <h2>ID1212: Lab 4 Quiz</h2>
         <h4>Welcome! Login to start a quiz.</h4>
         <%-- submit calls the SessionController to handle the login attempt --%>
-        <form id="loginForm" action="SessionController" method="POST">
-            <input name="username" type="text" placeholder="email" required/>
-            <input name="password" type="password" placeholder="password" required/>
-            <input name="login" type="submit"  value="Login"/>
+        <form id="LoginForm" action="GameController" method="GET">
+            <input name="Username" type="text" placeholder="email" required/>
+            <input name="Password" type="password" placeholder="password" required/>
+            <input name="Login" type="submit" value="Login"/>
         </form>
         <%-- Conditional rendering based on session attributes --%>
         <%  
-            if (status != null && status.equals("Error")) {
+            String status = (String) request.getSession().getAttribute("SessionStatus");
+            if (status != null && status.equals("Wrong")) {
                 out.print("<div class=\"error\"><p>The username and password combination you wrote is invalid!</p></div>");
+            }
+            else if (status != null && status.equals("Error")) {
+                out.print("<div class=\"error\"><p>Something went wrong!</p></div>");
             }
         %>
     </body>

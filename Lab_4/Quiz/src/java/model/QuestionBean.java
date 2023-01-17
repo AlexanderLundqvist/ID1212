@@ -1,6 +1,7 @@
 package model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  * This JavaBean represents a question.
@@ -10,8 +11,8 @@ import java.io.Serializable;
 public class QuestionBean implements Serializable {
     private Integer id;
     private String question;
-    private String[] options;
-    private String[] solution;
+    private ArrayList<String> options;
+    private ArrayList<String> answer;
     
     /**
      * No-argument constructor for the Bean.
@@ -55,7 +56,7 @@ public class QuestionBean implements Serializable {
      * Getter for the options field.
      * @return the options
      */
-    public String[] getOptions() {
+    public ArrayList<String> getOptions() {
         return this.options;
     }
 
@@ -63,24 +64,24 @@ public class QuestionBean implements Serializable {
      * Setter for the options field.
      * @param options the options to set
      */
-    public void setOptions(String[] options) {
+    public void setOptions(ArrayList<String> options) {
         this.options = options;
     }
 
     /**
-     * Getter for the solution field.
-     * @return the solution
+     * Getter for the answer field.
+     * @return the answer
      */
-    public String[] getSolution() {
-        return this.solution;
+    public ArrayList<String> getAnswer() {
+        return this.answer;
     }
 
     /**
-     * Setter for the solution field.
-     * @param solution the solution to set
+     * Setter for the answer field.
+     * @param answer the answer to set
      */
-    public void setSolution(String[] solution) {
-        this.solution = solution;
+    public void setAnswer(ArrayList<String> answer) {
+        this.answer = answer;
     }
     
     

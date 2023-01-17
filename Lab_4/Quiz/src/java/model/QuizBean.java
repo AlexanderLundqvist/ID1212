@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
- * This JavaBean represents a user.
+ * This JavaBean represents a quiz.
  * 
  * @author Alexander Lundqvist & Ramin Shojaei
  */
