@@ -23,7 +23,12 @@ public class GameController extends HttpServlet {
     
     @Override
     public void init() {
-    	database = new DBhandler();
+        try {
+            database = new DBhandler();
+        } catch (Exception exception) {
+            System.err.println("[GameController]: Could not get database: " + exception.getMessage());
+            exception.printStackTrace();
+        }
     }
     
     /**
@@ -39,11 +44,21 @@ public class GameController extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         HttpSession session = request.getSession(true);
-        ArrayList<QuizBean> quizzes = database.getQuizzes();
+        ArrayList<QuizBean> quizzes = (ArrayList<QuizBean>) session.getAttribute("Quizzes");
+        if (quizzes == null || quizzes.isEmpty()) {
+            quizzes = database.getQuizzes();
+            for (QuizBean quiz : quizzes) {
+                System.out.println("[GameController]: Quiz id = " + quiz.getId());
+                quiz.setQuestions(database.getQuestions(quiz.getId()));
+            }
+            session.setAttribute("Quizzes", quizzes); 
+        }
         
         // Logout
         String logout = request.getParameter("Logout"); 
         if (logout != null) {
+            UserBean user = (UserBean) session.getAttribute("UserBean");
+            System.out.println("[GameController]: User " + user.getUsername() + " has logged out!");
             session.setAttribute("UserBean", null);
             session.setAttribute("SessionStatus", "Logout");
             response.sendRedirect("index.jsp");
@@ -54,6 +69,7 @@ public class GameController extends HttpServlet {
         String username = request.getParameter("Username");
         String password = request.getParameter("Password");
         if (username != null && password != null) {
+            System.out.println("[GameController]: User " + username + " with password " + password);
             UserBean user = database.getUser(username, password);
             if (user == null) {
                 session.setAttribute("SessionStatus", "Wrong");
@@ -61,18 +77,12 @@ public class GameController extends HttpServlet {
                 return;
             }
             else {
-                quizzes = database.getQuizzes();
-                session.setAttribute("Quizzes", quizzes); 
+                System.out.println("[GameController]: User " + user.getUsername() + " has logged in!");
                 session.setAttribute("UserBean", user);                
                 session.setAttribute("SessionStatus", "Login");
                 response.sendRedirect("home.jsp");
                 return;
             }
-        }
-        else if (username == null || password == null) {
-            session.setAttribute("SessionStatus", "Error");
-            response.sendRedirect("index.jsp");
-            return;
         }
         
         // Navigate to home from quiz
@@ -86,9 +96,11 @@ public class GameController extends HttpServlet {
         // Navigate to quiz
         String subject = request.getParameter("Subject");     
         if (subject != null) {
+            System.out.println("[GameController]: Choosen subject = " + subject);
             // Ugly solution...
             for (QuizBean quiz : quizzes) {
                 if (quiz.getSubject().equals(subject)) {
+                    System.out.println("[GameController]: Active quiz = " + subject);
                     session.setAttribute("ActiveQuiz", quiz);
                     response.sendRedirect("quiz.jsp");
                     return;
@@ -97,31 +109,42 @@ public class GameController extends HttpServlet {
         }
         
         // Handle quiz submit
-        ArrayList<String> guesses = extractAnswers(request);
-        if (!guesses.isEmpty()) {
-            QuizBean quiz = (QuizBean) session.getAttribute("ActiveQuiz");
-            UserBean user = (UserBean) session.getAttribute("UserBean");
-            ArrayList<QuestionBean> questions = quiz.getQuestions();
-            Integer score = 0;
-            
-            for (int i = 0; i < guesses.size(); i++) {
-                ArrayList<String> options = questions.get(i).getOptions();
-                ArrayList<String> answer = questions.get(i).getAnswer();
-                Integer index = options.indexOf(guesses.get(i));
-                if (answer.get(index).equals("1")) {
-                    score++;
+        String submit = request.getParameter("SubmitQuiz"); 
+        if (submit != null) {
+            ArrayList<String> guesses = extractAnswers(request);
+            if (!guesses.isEmpty()) {
+                QuizBean quiz = (QuizBean) session.getAttribute("ActiveQuiz");
+                UserBean user = (UserBean) session.getAttribute("UserBean");
+                ArrayList<QuestionBean> questions = quiz.getQuestions();
+                Integer score = 0;
+
+                for (int i = 0; i < guesses.size(); i++) {
+                    ArrayList<String> options = questions.get(i).getOptions();
+                    ArrayList<String> answer = questions.get(i).getAnswer();
+                    Integer index = options.indexOf(guesses.get(i));
+                    if (answer.get(index).equals("1")) {
+                        score++;
+                        System.out.println("[GameController]: Correct!");
+                    }
+                    else {
+                        System.out.println("[GameController]: Wrong!");
+                    }
                 }
+
+                // Update session and database
+                ArrayList<Integer> newResults = user.getResults();
+                newResults.set(quiz.getId()-1, score);
+//                ArrayList<Integer> newResults = new ArrayList<>();
+//                newResults.add(user.getId());
+//                newResults.add(quiz.getId());
+//                newResults.add(score);
+                user.setResults(newResults);
+                session.setAttribute("UserBean", user);
+                database.updateResult(user.getId(), quiz.getId(), score);
+                System.out.println("[GameController]: Updated user " + user.getId() + " for quiz " + quiz.getId() + " with " + score);
+                response.sendRedirect("home.jsp");
             }
-            
-            // Update session and database
-            ArrayList<Integer> results = user.getResults();
-            results.set(quiz.getId(), score);
-            user.setResults(results);
-            session.setAttribute("UserBean", user);
-            database.updateResult(user.getId(), quiz.getId(), score);
-            response.sendRedirect("home.jsp");
         }
-        
     } 
     
     /**
@@ -133,10 +156,12 @@ public class GameController extends HttpServlet {
     private ArrayList<String> extractAnswers(HttpServletRequest request) {
         ArrayList<String> answers = new ArrayList<>();
         int i = 1;
-        while (request.getParameter("question" + i) != null) {
-            answers.add(request.getParameter("question" + i));
+        while (request.getParameter("Question" + i) != null) {
+            System.out.println("[GameController]: Question " + i + " = " + request.getParameter("Question" + i));
+            answers.add(request.getParameter("Question" + i));
             i++;
         }
+        System.out.println("[GameController]: Answers parsed!");
         return answers;
     } 
     
