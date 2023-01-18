@@ -47,7 +47,7 @@
                 ArrayList<Integer> results = user.getResults();
                 out.print("<h4>Current statistics</h4>");
                 for (int i = 0; i < results.size(); i++) {
-                    out.print("<p>" + quizzes.get(i).getSubject() + ": " + 0 + "/" + quizzes.get(i).getQuestions().size() + "</p>");
+                    out.print("<p>" + quizzes.get(i).getSubject() + ": " + results.get(i) + "/" + quizzes.get(i).getQuestions().size() + "</p>");
                 }
             }
         %>

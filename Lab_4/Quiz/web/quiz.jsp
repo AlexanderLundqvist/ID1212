@@ -35,23 +35,30 @@
             ArrayList<QuestionBean> questions = quiz.getQuestions();
             
             if (quiz.getSubject() != null) {out.print("<h2>" + quiz.getSubject() + "</h2>");}
-            out.print("<form class=\"NavForm\" action=\"GameController\" method=\"GET\">");
+            out.print("<form class=\"NavForm\" action=\"GameController\" method=\"POST\">");
             out.print("<input name=\"Nav\" type=\"submit\" value=\"Home\"/>");
             out.print("</form>");
             
-            if (quiz == null || questions.isEmpty()) {           
-                out.print("<div class=\"error\"><p>Something went wrong!</p></div>");
+            if (quiz == null) {           
+                out.print("<div class=\"error\"><p>Could not get the quiz!</p></div>");
+            }
+            else if (questions.isEmpty()) {
+                out.print("<div class=\"error\"><p>No questions available!</p></div>");
             }
             else {
                 out.print("<form id=\"quiz\" action=\"GameController\" method=\"POST\">");
+                int i = 1;
                 for (QuestionBean question : questions) {
-                    out.print("<h4>Question " + question.getId() + "</h4>");
+                    out.print("<h4>Question " + i + "</h4>");
                     out.print("<p>" + question.getQuestion() + "</p>");
                     ArrayList<String> options = question.getOptions();
                     for (String option : options) {
-                        out.print("<input name=\"question" + question.getId() + "\" type=\"radio\" value=\"" + option + "\" required/>" + option + "<br>");
+                        out.print("<input name=\"Question" + i + "\" type=\"radio\" value=\"" + option + "\" required/> " + option + "<br>");
+                        
                     }
+                    i++;
                 }
+                out.print("<br><input name=\"SubmitQuiz\" type=\"submit\" value=\"Submit\"/>");
                 out.print("</form><br>"); 
             }
         %>

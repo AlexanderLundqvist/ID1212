@@ -42,7 +42,7 @@ public class DBhandler {
             connection = createConnection();
             prepareStatements();
         } catch (Exception exception){
-            System.err.println("Could not create database handler: " + exception.getMessage());
+            System.err.println("[DBhandler]: Could not create database handler: " + exception.getMessage());
             exception.printStackTrace();
         }
     }
@@ -61,6 +61,7 @@ public class DBhandler {
             this.getUser.setString(2, password);
             ResultSet result = this.getUser.executeQuery();
             if (result.next()) {
+                System.out.println("[DBhandler]: User found!");
                 user = new UserBean();
                 Integer id = result.getInt("id");
                 String usernameDB = result.getString("username");
@@ -70,8 +71,9 @@ public class DBhandler {
                 user.setResults(getResults(id));
             }
             result.close();
+            this.connection.commit();
         } catch (SQLException exception) {
-            System.err.println("Could not fetch user: " + exception.getMessage());
+            System.err.println("[DBhandler]: Could not fetch user: " + exception.getMessage());
             exception.printStackTrace();
         }
         return user;
@@ -86,6 +88,7 @@ public class DBhandler {
         try {
             ResultSet result = this.getQuizzes.executeQuery();
             while (result.next()) {
+                System.out.println("[DBhandler]: Quiz found!");
                 // Get the row cells
                 Integer id = result.getInt("id");
                 String subject = result.getString("subject");
@@ -94,11 +97,13 @@ public class DBhandler {
                 QuizBean quiz = new QuizBean();
                 quiz.setId(id);
                 quiz.setSubject(subject);
-                quiz.setQuestions(getQuestions(id));
+                quizzes.add(quiz);
             }
             result.close();
+            this.connection.commit();
+            System.out.println("[DBhandler]: " + quizzes.size() + " quizzes created!");
         } catch (SQLException exception) {
-            System.err.println("Could not fetch quiz: " + exception.getMessage());
+            System.err.println("[DBhandler]: Could not fetch quiz: " + exception.getMessage());
             exception.printStackTrace();
         }
         return quizzes;
@@ -116,12 +121,13 @@ public class DBhandler {
             this.getQuestions.setInt(1, quizId);
             ResultSet result = this.getQuestions.executeQuery();
             while (result.next()) {
+                System.out.println("[DBhandler]: Question found!");
                 // Get the row cells
                 Integer id = result.getInt("id");
                 String text = result.getString("text");
                 String options = result.getString("options");
                 String answer = result.getString("answer");
-                
+
                 // Parse the questions
                 ArrayList<String> optionsList = new ArrayList<>();
                 String[] optionsParsed = options.split("/");
@@ -138,11 +144,13 @@ public class DBhandler {
                 question.setQuestion(text);
                 question.setOptions(optionsList);
                 question.setAnswer(answerList);
-                
+                requestedQuestions.add(question);
             }
             result.close();
+            this.connection.commit();
+            System.out.println("[DBhandler]: Questions created!");
         } catch (SQLException exception) {
-            System.err.println("Could not fetch questions: " + exception.getMessage());
+            System.err.println("[DBhandler]: Could not fetch questions: " + exception.getMessage());
             exception.printStackTrace();
         } 
         return requestedQuestions;
@@ -164,6 +172,8 @@ public class DBhandler {
                 requestedResults.add(score);
             }
             result.close();
+            this.connection.commit();
+            System.out.println("[DBhandler]: Results found!");
         } catch (SQLException exception) {
             System.err.println("Could not fetch results: " + exception.getMessage());
             exception.printStackTrace();
@@ -179,12 +189,14 @@ public class DBhandler {
      */
     public void updateResult(Integer userId, Integer quizId, Integer score) {
         try {
-            this.updateResult.setInt(1, userId);
-            this.updateResult.setInt(2, quizId);
-            this.updateResult.setInt(3, score);
-            this.updateResult.executeQuery();
+            this.updateResult.setInt(1, score);
+            this.updateResult.setInt(2, userId);
+            this.updateResult.setInt(3, quizId);
+            this.updateResult.executeUpdate();
+            this.connection.commit();
+            System.out.println("[DBhandler]: Result updated!");
         } catch (SQLException exception) {
-            System.err.println("Could not update results: " + exception.getMessage());
+            System.err.println("[DBhandler]: Could not update results: " + exception.getMessage());
             exception.printStackTrace();
         }
     }
@@ -202,7 +214,7 @@ public class DBhandler {
             properties.setProperty("password",this.dbPassword);
             dbConnection = DriverManager.getConnection(this.dbURL, properties);
             dbConnection.setAutoCommit(false);
-            System.out.println("Successful connection to database!");
+            System.out.println("[DBhandler]: Successful connection to database!");
         } catch (ClassNotFoundException exception){
             System.err.println("Failed to load database drivers: " + exception.getMessage());
             exception.printStackTrace();
@@ -235,7 +247,9 @@ public class DBhandler {
         );
 
         this.updateResult = this.connection.prepareStatement(
-                "INSERT INTO results (user_id, quiz_id, score) VALUES (?, ?, ?)"
+                "UPDATE results SET score=? WHERE user_id=? AND quiz_id=?"
         );
+        
+        System.out.println("[DBhandler]: Statements prepared!");
     }
 }
