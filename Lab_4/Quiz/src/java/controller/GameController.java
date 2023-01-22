@@ -105,6 +105,10 @@ public class GameController extends HttpServlet {
                     response.sendRedirect("quiz.jsp");
                     return;
                 }
+                else {
+                    response.sendRedirect("home.jsp");
+                    return;
+                }
             }   
         }
         
@@ -134,10 +138,6 @@ public class GameController extends HttpServlet {
                 // Update session and database
                 ArrayList<Integer> newResults = user.getResults();
                 newResults.set(quiz.getId()-1, score);
-//                ArrayList<Integer> newResults = new ArrayList<>();
-//                newResults.add(user.getId());
-//                newResults.add(quiz.getId());
-//                newResults.add(score);
                 user.setResults(newResults);
                 session.setAttribute("UserBean", user);
                 database.updateResult(user.getId(), quiz.getId(), score);

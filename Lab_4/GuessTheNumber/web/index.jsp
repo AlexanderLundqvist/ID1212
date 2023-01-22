@@ -60,7 +60,7 @@
         </div>
         <%-- submit calls the HTTPHandler.java method doGet() to handle the guess --%>
         <form id="form" action="HTTPHandler" method="GET">
-            <input type="text" name="guess" placeholder="Enter a number...">
+            <input type="text" name="guess" placeholder="Enter a number..." required>
             <input type="submit" value="Submit">
         </form>
     </body>
