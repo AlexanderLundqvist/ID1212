@@ -105,10 +105,6 @@ public class GameController extends HttpServlet {
                     response.sendRedirect("quiz.jsp");
                     return;
                 }
-                else {
-                    response.sendRedirect("home.jsp");
-                    return;
-                }
             }   
         }
         
